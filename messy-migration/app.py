@@ -82,20 +82,15 @@ def create_user():
 def update_user(user_id):
     try:
         data = request.get_json()
-
-        name = data.get('name')
-        email = data.get('email')
-
+        name, email = data.get('name'), data.get('email')
         if not name or not email:
-            return jsonify({'error': 'Name and Email are required'}),400
-
-        cursor.execute(f"UPDATE users SET name = '{name}', email = '{email}' WHERE id = '{user_id}'")
-        conn.commit()
-        if cursor.rowcount==0:
-            return jsonify({'error': 'User not found'}),404
-        return jsonify({'message': 'User updated successfully'}),200
+            return jsonify({'error': 'Name and Email are required'}), 400
+        cursor.execute("UPDATE users SET name = ?, email = ? WHERE id = ?", (name, email, user_id))
+        if cursor.rowcount == 0:
+            return jsonify({'error': 'User not found'}), 404
+        return jsonify({'message': 'User updated successfully'}), 200
     except Exception as e:
-        return jsonify({'error': str(e)}),500
+        return jsonify({'error': str(e)}), 500
 
 #added try except block for error handling and converted raw data to json data using jsonify also added status code for every response
 @app.route('/user/<int:user_id>', methods=['DELETE'])
