@@ -2,7 +2,6 @@
 
 ## Major Issues Identified
 - Raw SQL queries with f-strings → vulnerable to SQL injection
-- No password hashing → insecure credential storage
 - Inconsistent error handling and missing HTTP status codes
 - Monolithic file structure
 - No tests or input validations
