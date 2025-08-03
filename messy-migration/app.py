@@ -40,7 +40,7 @@ def get_all_users():
 def get_user(user_id):
     try:
         query = "SELECT * FROM users WHERE id = ?"
-        cursor.execute(query, [user_id])
+        cursor.execute(query, (user_id,))
         user = cursor.fetchone()
 
         if user:
@@ -67,10 +67,10 @@ def create_user():
         email = data.get('email')
         password = data.get('password')
 
-        if not all [name,email,password]:
+        if not all ((name,email,password)):
             return jsonify({'error': 'Missing required fields'}),400
 
-        cursor.execute(f"INSERT INTO users (name, email, password) VALUES (?,?,?)",(name,email,password))
+        cursor.execute(f"INSERT INTO users (name, email, password) VALUES (?,?,?)",(name,email,password,))
         conn.commit()
         return jsonify({'message': '"User created successfully!"'}), 201
     except Exception as e:
@@ -85,7 +85,7 @@ def update_user(user_id):
         name, email = data.get('name'), data.get('email')
         if not name or not email:
             return jsonify({'error': 'Name and Email are required'}), 400
-        cursor.execute("UPDATE users SET name = ?, email = ? WHERE id = ?", (name, email, user_id))
+        cursor.execute("UPDATE users SET name = ?, email = ? WHERE id = ?", (name, email, user_id,))
         if cursor.rowcount == 0:
             return jsonify({'error': 'User not found'}), 404
         return jsonify({'message': 'User updated successfully'}), 200
@@ -96,7 +96,7 @@ def update_user(user_id):
 @app.route('/user/<int:user_id>', methods=['DELETE'])
 def delete_user(user_id):
     try:
-        cursor.execute(f"DELETE FROM users WHERE id = ?" , [user_id])
+        cursor.execute(f"DELETE FROM users WHERE id = ?" , (user_id,))
         conn.commit()
         if cursor.rowcount==0:
             return jsonify({'error': 'User not found'}),404
@@ -110,17 +110,22 @@ def search_users():
     name = request.args.get('name')
 
     if not name:
-        return jsonify({'error': 'Please provide a name to search'})
+        return jsonify({'error': 'Please provide a name to search'}), 400
 
     try:
-        cursor.execute(f"SELECT * FROM users WHERE name LIKE '%{name}%'")
+        query = "SELECT id, name, email FROM users WHERE name LIKE ?"
+        cursor.execute(query, (f"%{name}%",))
         users = cursor.fetchall()
+
         if not users:
-            return jsonify({'erorr': 'No users found'}),404
-        users_data = [{'id': user[0],'name': user[1],'email': user[2]} for user in users]
-        return jsonify(users_data),200
+            return jsonify({'message': 'No users found matching that name'}), 404
+
+        users_data = [{'id': user[0], 'name': user[1], 'email': user[2]} for user in users]
+        return jsonify(users_data), 200
+
     except Exception as e:
-        return jsonify({'error': str(e)}),500
+        # 🔒 Avoid leaking raw exception in production; log it instead
+        return jsonify({'error': 'Internal server error'}), 500
 
 
 @app.route('/login', methods=['POST'])

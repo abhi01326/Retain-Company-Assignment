@@ -1,3 +1,6 @@
+import os
+import sys
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from flask import Flask, request, jsonify, redirect
 from app.models import save_url, get_url, increment_click, get_stats
 from app.utils import is_valid_url, generate_short_code
